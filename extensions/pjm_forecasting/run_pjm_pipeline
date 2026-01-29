@@ -1,4 +1,3 @@
-# ------------------------------
 # Include modules
 include(joinpath(@__DIR__, "data/clean_pjm_load.jl"))
 using .CleanPJMLoad
