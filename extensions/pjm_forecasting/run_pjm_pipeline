@@ -12,16 +12,14 @@ using .ScenarioGeneration
 include(joinpath(@__DIR__, "export/write_demand_csv.jl"))
 using .WriteDemandCSV
 
-# 1Load & clean PJM data
+# clean PJM data
 raw_csv_path = joinpath(@__DIR__, "data/raw_pjm_load.csv")
 df_clean = CleanPJMLoad.load_and_clean(raw_csv_path)
 
-# Train LSTM per zone
+# each zone is trained on unique constraints
 model_z1, mu1, o1 = TrainLSTM.train_model(df_clean.Demand_MW_z1)
 model_z2, mu2, o2 = TrainLSTM.train_model(df_clean.Demand_MW_z2)
 model_z3, mu3, o3 = TrainLSTM.train_model(df_clean.Demand_MW_z3)
-
-#  Generate 3 scenarios for each zone
 scenarios_z1 = ScenarioGeneration.generate_scenarios(model_z1, mu1, o1, df_clean.Demand_MW_z1)
 scenarios_z2 = ScenarioGeneration.generate_scenarios(model_z2, mu2, o2, df_clean.Demand_MW_z2)
 scenarios_z3 = ScenarioGeneration.generate_scenarios(model_z3, mu3, o3, df_clean.Demand_MW_z3)
