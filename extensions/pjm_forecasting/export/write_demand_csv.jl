@@ -6,12 +6,8 @@ using DataFrames
 """
 Write MacroEnergy-compatible demand.csv.
 
-Inputs:
-- path::String : path to output CSV
-- time::Vector{DateTime} : time index
-- z1::Vector{Float64} : demand scenario for zone 1
-- z2::Vector{Float64} : demand scenario for zone 2
-- z3::Vector{Float64} : demand scenario for zone 3
+only necessary variables are the time index, and the MW demands for each (3) zones.
+The H2 demands and Demand_Zero columns are filled with zeros.
 """
 function write_demand(path::String, time::Vector, z1::Vector, z2::Vector, z3::Vector)
     n = length(time)
