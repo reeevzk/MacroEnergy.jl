@@ -17,6 +17,9 @@ It relies on LSTM forecasting through the Flux.jl module and integrates into the
 - **MacroEnergy Integration**  
   Exports `demand.csv` in the exact format required by MacroEnergy, with minimal changes to core files.  
 
+# Next Update:
+Working on a mapping system that generalizes to more zones beyond PJM that creates zones that contextualize based on each state’s demands.
+
 ## Usage
 
 1. Place the raw PJM CSV in `data/raw_pjm_load.csv`.  
