@@ -1,0 +1,25 @@
+## PJM Load Forecasting Extension for MacroEnergy
+
+This extension adds a data-driven electricity demand forecasting pipeline to the MacroEnergy optimization framework, focusing on PJM grid data.
+It relies on LSTM forecasting through the Flux.jl module and integrates into the MILP workflow of the rest of the package.
+
+# Features
+
+- **Data Cleaning & Aggregation**  
+  Cleans raw PJM hourly load data and maps zones to three zones compatible with the larger scale Macro files.
+
+- **LSTM Forecasting (Flux.jl)**  
+  Trains a zone-wise LSTM model on historical load to predict future demand.  
+
+- **Scenario Generation**  
+  Produces multiple demand scenarios (optimistic, central, conservative) for stochastic MILP analysis.  
+
+- **MacroEnergy Integration**  
+  Exports `demand.csv` in the exact format required by MacroEnergy, with minimal changes to core files.  
+
+## Usage
+
+1. Place the raw PJM CSV in `data/raw_pjm_load.csv`.  
+2. Run the pipeline:
+
+julia run_pjm_pipeline.jl
