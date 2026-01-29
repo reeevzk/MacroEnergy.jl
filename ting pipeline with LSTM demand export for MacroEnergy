@@ -1,0 +1,136 @@
+[1mdiff --git a/extensions/pjm_forecasting/data/clean_pjm_load b/extensions/pjm_forecasting/data/clean_pjm_load[m
+[1mnew file mode 100644[m
+[1mindex 00000000..b414aeda[m
+[1m--- /dev/null[m
+[1m+++ b/extensions/pjm_forecasting/data/clean_pjm_load[m
+[36m@@ -0,0 +1,61 @@[m
+[32m+[m[32mmodule CleanPJMLoad[m
+[32m+[m
+[32m+[m[32musing CSV[m
+[32m+[m[32musing DataFrames[m
+[32m+[m[32musing Dates[m
+[32m+[m
+[32m+[m[32m"[m
+[32m+[m[32mClean PJM raw load data for LSTM forecasting.[m
+[32m+[m
+[32m+[m[32mInput:[m
+[32m+[m[32m- path::String : path to raw PJM CSV[m
+[32m+[m
+[32m+[m[32mOutput:[m
+[32m+[m[32m- DataFrame with columns:[m
+[32m+[m[32m    Time_Index[m
+[32m+[m[32m    Demand_MW_z1[m
+[32m+[m[32m    Demand_MW_z2[m
+[32m+[m[32m    Demand_MW_z3[m
+[32m+[m[32m"[m
+[32m+[m[32mfunction load_and_clean(path::String)[m
+[32m+[m
+[32m+[m[32m    # 1️⃣ Load CSV[m
+[32m+[m[32m    df = CSV.read(path, DataFrame)[m
+[32m+[m
+[32m+[m[32m    # 2️⃣ Filter only the columns we need[m
+[32m+[m[32m    df = select(df, [:datetime_beginning_ept, :mkt_region, :zone, :mw])[m
+[32m+[m
+[32m+[m[32m    # 3️⃣ Convert timestamp to DateTime[m
+[32m+[m[32m    df.Time_Index = DateTime.(df.datetime_beginning_ept, dateformat"m/d/Y H:M")[m
+[32m+[m
+[32m+[m[32m    # 4️⃣ Aggregate zones into MacroEnergy zones[m
+[32m+[m[32m    # Define your mapping from PJM zones → z1, z2, z3[m
+[32m+[m[32m    # Example: you can choose which zones go to which z[m
+[32m+[m[32m    z1_zones = ["AE", "AEP", "DAY"]      # example[m
+[32m+[m[32m    z2_zones = ["BC", "CE", "DEOK"]     # example[m
+[32m+[m[32m    z3_zones = ["DOM", "DPL"]           # example[m
+[32m+[m
+[32m+[m[32m    # Initialize empty arrays[m
+[32m+[m[32m    time_index = unique(df.Time_Index)[m
+[32m+[m[32m    n = length(time_index)[m
+[32m+[m[32m    Demand_MW_z1 = zeros(n)[m
+[32m+[m[32m    Demand_MW_z2 = zeros(n)[m
+[32m+[m[32m    Demand_MW_z3 = zeros(n)[m
+[32m+[m
+[32m+[m[32m    # Aggregate MW per zone per timestamp[m
+[32m+[m[32m    for (i, t) in enumerate(time_index)[m
+[32m+[m[32m        df_t = filter(row -> row.Time_Index == t, df)[m
+[32m+[m[32m        Demand_MW_z1[i] = sum(row.mw for row in eachrow(df_t) if row.zone in z1_zones)[m
+[32m+[m[32m        Demand_MW_z2[i] = sum(row.mw for row in eachrow(df_t) if row.zone in z2_zones)[m
+[32m+[m[32m        Demand_MW_z3[i] = sum(row.mw for row in eachrow(df_t) if row.zone in z3_zones)[m
+[32m+[m[32m    end[m
+[32m+[m
+[32m+[m[32m    return DataFrame([m
+[32m+[m[32m        Time_Index = time_index,[m
+[32m+[m[32m        Demand_MW_z1 = Demand_MW_z1,[m
+[32m+[m[32m        Demand_MW_z2 = Demand_MW_z2,[m
+[32m+[m[32m        Demand_MW_z3 = Demand_MW_z3[m
+[32m+[m[32m    )[m
+[32m+[m[32mend[m
+[32m+[m
+[32m+[m[32mend # module[m
+\ No newline at end of file[m
+[1mdiff --git a/extensions/pjm_forecasting/data/raw_pjm_load.csv b/extensions/pjm_forecasting/data/raw_pjm_load.csv[m
+[1mnew file mode 100644[m
+[1mindex 00000000..1fe23527[m
+[1m--- /dev/null[m
+[1m+++ b/extensions/pjm_forecasting/data/raw_pjm_load.csv[m
+[36m@@ -0,0 +1,22321 @@[m
+[32m+[m[32mdatetime_beginning_utc,datetime_beginning_ept,nerc_region,mkt_region,zone,load_area,mw,is_verified[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,AE,AECO,886.168,FALSE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,AEP,AEPAPT,4567.235,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,AEP,AEPIMP,3313.339,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,AEP,AEPKPT,733.767,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,AEP,AEPOPT,8010.573,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,AP,AP,5659.055,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,BC,BC,3317.804,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,CE,CE,10182.929,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,DAY,DAY,2005.716,FALSE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,DEOK,DEOK,2913.832,FALSE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,SERC,SOUTH,DOM,DOM,14447.87,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,DPL,DPLCO,1889.315,FALSE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,DUQ,DUQ,1339.045,FALSE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,DPL,EASTON,26.697,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,SERC,WEST,EKPC,EKPC,2031.69,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,JC,JC,2114.695,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,ME,ME,1607.002,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,ATSI,OE,6661.823,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,OVEC,OVEC,40,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,WEST,ATSI,PAPWR,515.376,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,PE,PE,3878.484,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,PEP,PEPCO,2531.422,FALSE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,PL,PLCO,4263.623,FALSE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,PN,PN,1711.274,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,PS,PS,4338.747,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,RECO,RECO,129.676,FALSE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,PEP,SMECO,415.72,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,PL,UGI,111.436,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RFC,MIDATL,AE,VMEU,69.732,TRUE[m
+[32m+[m[32m12/1/2025 5:00,12/1/2025 0:00,RTO,RTO,RTO,RTO,89714.045,FALSE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,AE,AECO,868.162,FALSE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,AEP,AEPAPT,4583.239,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,AEP,AEPIMP,3277.804,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,AEP,AEPKPT,733.011,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,AEP,AEPOPT,7950.715,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,AP,AP,5592.895,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,BC,BC,3272.932,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,CE,CE,10030.199,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,DAY,DAY,1986.717,FALSE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,DEOK,DEOK,2861.191,FALSE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,SERC,SOUTH,DOM,DOM,14326.279,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,DPL,DPLCO,1881.741,FALSE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,DUQ,DUQ,1322.452,FALSE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,DPL,EASTON,27.278,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,SERC,WEST,EKPC,EKPC,2102.95,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,JC,JC,2053.867,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,ME,ME,1589.107,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,ATSI,OE,6554.638,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,OVEC,OVEC,37,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,WEST,ATSI,PAPWR,514.906,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,PE,PE,3825.725,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,PEP,PEPCO,2482.698,FALSE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,PL,PLCO,4192.54,FALSE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,PN,PN,1696.331,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,PS,PS,4224.79,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,RECO,RECO,125.741,FALSE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,PEP,SMECO,414.236,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,PL,UGI,108.934,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RFC,MIDATL,AE,VMEU,68.78,TRUE[m
+[32m+[m[32m12/1/2025 6:00,12/1/2025 1:00,RTO,RTO,RTO,RTO,88706.858,FALSE[m
+[32m+[m[32m12/1/2025 7:00,12/1/2025 2:00,RFC,MIDATL,AE,AECO,859.432,FALSE[m
