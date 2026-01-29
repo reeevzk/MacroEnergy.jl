@@ -3,9 +3,9 @@ module LSTMModel
 # uses Julia's Flux library for LSTM implementation
 using Flux
 
-"""
-input: number of input features (1 for load)
-"""
+
+# input: number of input features (1 for load)
+
 function build_model(input_dim::Int=1, hidden_dim::Int=64)
     return Chain(
         LSTM(input_dim, hidden_dim),
