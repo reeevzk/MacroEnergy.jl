@@ -19,16 +19,16 @@ Output:
 "
 function load_and_clean(path::String)
 
-    # 1️⃣ Load CSV
+    # Load CSV
     df = CSV.read(path, DataFrame)
 
-    # 2️⃣ Filter only the columns we need
+    # Filter only the columns we need
     df = select(df, [:datetime_beginning_ept, :mkt_region, :zone, :mw])
 
-    # 3️⃣ Convert timestamp to DateTime
+    # Convert timestamp to DateTime
     df.Time_Index = DateTime.(df.datetime_beginning_ept, dateformat"m/d/Y H:M")
 
-    # 4️⃣ Aggregate zones into MacroEnergy zones
+    # Aggregate zones into MacroEnergy zones
     # Define your mapping from PJM zones → z1, z2, z3
     # Example: you can choose which zones go to which z
     z1_zones = ["AE", "AEP", "DAY"]      # example
