@@ -1,0 +1,61 @@
+module CleanPJMLoad
+
+using CSV
+using DataFrames
+using Dates
+
+"
+Clean PJM raw load data for LSTM forecasting.
+
+Input:
+- path::String : path to raw PJM CSV
+
+Output:
+- DataFrame with columns:
+    Time_Index
+    Demand_MW_z1
+    Demand_MW_z2
+    Demand_MW_z3
+"
+function load_and_clean(path::String)
+
+    # 1️⃣ Load CSV
+    df = CSV.read(path, DataFrame)
+
+    # 2️⃣ Filter only the columns we need
+    df = select(df, [:datetime_beginning_ept, :mkt_region, :zone, :mw])
+
+    # 3️⃣ Convert timestamp to DateTime
+    df.Time_Index = DateTime.(df.datetime_beginning_ept, dateformat"m/d/Y H:M")
+
+    # 4️⃣ Aggregate zones into MacroEnergy zones
+    # Define your mapping from PJM zones → z1, z2, z3
+    # Example: you can choose which zones go to which z
+    z1_zones = ["AE", "AEP", "DAY"]      # example
+    z2_zones = ["BC", "CE", "DEOK"]     # example
+    z3_zones = ["DOM", "DPL"]           # example
+
+    # Initialize empty arrays
+    time_index = unique(df.Time_Index)
+    n = length(time_index)
+    Demand_MW_z1 = zeros(n)
+    Demand_MW_z2 = zeros(n)
+    Demand_MW_z3 = zeros(n)
+
+    # Aggregate MW per zone per timestamp
+    for (i, t) in enumerate(time_index)
+        df_t = filter(row -> row.Time_Index == t, df)
+        Demand_MW_z1[i] = sum(row.mw for row in eachrow(df_t) if row.zone in z1_zones)
+        Demand_MW_z2[i] = sum(row.mw for row in eachrow(df_t) if row.zone in z2_zones)
+        Demand_MW_z3[i] = sum(row.mw for row in eachrow(df_t) if row.zone in z3_zones)
+    end
+
+    return DataFrame(
+        Time_Index = time_index,
+        Demand_MW_z1 = Demand_MW_z1,
+        Demand_MW_z2 = Demand_MW_z2,
+        Demand_MW_z3 = Demand_MW_z3
+    )
+end
+
+end # module

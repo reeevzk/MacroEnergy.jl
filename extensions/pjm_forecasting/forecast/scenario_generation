@@ -1,0 +1,27 @@
+using Random, Statistics
+
+"
+Generate multiple demand scenarios from a trained LSTM.
+- model : trained Flux model
+- mu, sigma (o) : normalization parameters
+- base_series : original data vector
+- n_scenarios : number of scenarios to generate
+"
+function generate_scenarios(model, mu, o, base_series; n_scenarios::Int=3)
+    seq_len = 24
+    norm_data = (base_series .- mu) ./ o
+    scenarios = []
+
+    for s in 1:n_scenarios
+        pred = copy(norm_data)
+        for t in seq_len+1:length(pred)
+            input_seq = reshape(pred[t-seq_len:t-1], (seq_len,1))
+            yhat = model(input_seq)
+            pred[t] = yhat[1] + randn()*0.03
+        end
+        # denormalize
+        push!(scenarios, pred .* o .+ mu)
+    end
+
+    return scenarios
+end

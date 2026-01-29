@@ -1,0 +1,17 @@
+module LSTMModel
+
+using Flux
+
+"""
+Build a simple LSTM + Dense model for one-zone forecasting.
+- input_dim : number of input features (1 for load)
+- hidden_dim: LSTM hidden layer size
+"""
+function build_model(input_dim::Int=1, hidden_dim::Int=64)
+    return Chain(
+        LSTM(input_dim, hidden_dim),
+        Dense(hidden_dim, 1)
+    )
+end
+
+end # module

@@ -1,0 +1,39 @@
+module TrainLSTM
+
+using Flux, Statistics
+using ..LSTMModel
+
+"""
+Train LSTM on a single load series.
+- data : Vector of Float64
+- epochs: number of training epochs
+Returns trained model.
+"""
+function train_model(data::Vector{Float64}; epochs::Int=50)
+    # Normalize data
+    mu, o = mean(data), std(data)
+    norm_data = (data .- mu) ./ o
+
+    # Prepare sequences (X, y)
+    seq_len = 24  # use past 24 hours
+    X = [norm_data[i:i+seq_len-1] for i in 1:(length(norm_data)-seq_len)]
+    y = norm_data[(seq_len+1):end]
+
+    # Convert to matrices for Flux
+    X = hcat(X...)  # seq_len x batch
+    y = reshape(y, 1, :)
+
+    # Build model
+    model = LSTMModel.build_model(1, 64)
+    loss(x, y_true) = Flux.Losses.mse(model(x), y_true)
+    opt = ADAM(1e-3)
+
+    # Training loop
+    for epoch in 1:epochs
+        Flux.train!(loss, params(model), [(X, y)], opt)
+    end
+
+    return model, mu, o
+end
+
+end # module
